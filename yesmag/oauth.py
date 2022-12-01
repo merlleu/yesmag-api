@@ -46,7 +46,6 @@ class YesMagOAuth:
             j = r.json()
             self.token = j["token"]
             self._user_id = j["id"]
-            print(j)
             self.token_exp = _get_jwt_payload(self.token)["exp"]
             self._save()
 
