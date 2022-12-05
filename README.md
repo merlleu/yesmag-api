@@ -8,4 +8,4 @@
 4. On yesmag website, go to "Abonnement / Connect." 
 5. Click on "Actualisation des stats"
 6. Go to "Mes statistiques"
-7. You now have your new stats applied.
+7. You now have your new stats applied
