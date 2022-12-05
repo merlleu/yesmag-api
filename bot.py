@@ -11,7 +11,9 @@ usr = api.get_user()
 print("Logged-in as {} ({})".format(usr['email'], usr['id']))
 
 NUM_ARTICLES = int(input("Nombre d'articles à marquer comme lus: "))
+# NUM_ARTICLES = 1
 SECONDES_PASSEES = random.randint(100, 200)*NUM_ARTICLES # nombre de secondes à ajouter aux stats
+ACCURACY = 0.92
 
 
 def ts(t):
@@ -58,7 +60,7 @@ def process_articles():
         article = articles_non_lus.pop()
 
         tm = round((time.time() - random.randint(3600, 3600*24*25))*1000)
-        tm_start = tm - random.randint(100_000, 200_000)
+        tm_start = tm - random.randint(100_000, 400_000)
         quizz = [_['correct'] for _ in api.get_quizz(article['id'])]
         a = api.get_article(article['id']).split("\n")
         lines = len([_ for _ in a if len(_) > 3 and not _.startswith('SOUSTITRE')]) + 1
@@ -67,12 +69,15 @@ def process_articles():
             "type":"articleRead",
             "json":{"articleId":article['id'],"partial":False,"date":ts(tm_start),"numberLines":lines,"dateFinished":ts(tm)}
         })
+
+        r = [ (_-1 if random.random() < ACCURACY else -1) for _ in quizz]
+
         api.post_bag({
             "type":"quizz",
             "json":{
                 "id":"quizz{}".format(article['id']),
-                "points": len(quizz),
-                "answers":[ _-1 for _ in quizz],
+                "points": len([1 for i in r if i != -1]),
+                "answers": [(_ if _ != -1 else 0) for _ in r],
                 "correctAnswers":[ _ for _ in quizz],
                 "lastModified":ts(tm),
                 "maxPoints":len(quizz)
@@ -82,6 +87,22 @@ def process_articles():
         print("READ ARTICLE {} - {} AT {}".format(article['id'], article['title'], ts(tm_start)))
         # time.sleep(1)
 
+def update_read_stats():
+    stats = [_ for _ in api.get_bags()['hydra:member'] if _['type'] == 'quizz']
+    for s in stats:
+        j = s['json']
+        print(s)
+        r = [ (_-1 if random.random() < ACCURACY else -1) for _ in j['correctAnswers']]
+        
+        j['answers'] = [(_ if _ != -1 else 0) for _ in r]
+        j['points'] = len([1 for i in range(len(r)) if r[i] != -1])
+        j['lastModified'] = j['lastModified'][:-2] + str(random.randint(0, 9)) +  "Z"
+        print(s)
+        api.put_bag(s['id'], {"json": j})
+
+        
+    
 if __name__ == "__main__":
     process_timer()
     process_articles()
+    # update_read_stats()
