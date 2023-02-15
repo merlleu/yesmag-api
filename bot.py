@@ -61,7 +61,11 @@ def process_articles():
 
         tm = round((time.time() - random.randint(3600, 3600*24*25))*1000)
         tm_start = tm - random.randint(100_000, 400_000)
-        quizz = [_['correct'] for _ in api.get_quizz(article['id'])]
+        Q = api.get_quizz(article['id'])
+        if not Q:
+            print("NO QUIZZ FOR ARTICLE {} - {} AT {}".format(article['id'], article['title'], ts(tm_start)))
+            continue
+        quizz = [_['correct'] for _ in Q]
         a = api.get_article(article['id']).split("\n")
         lines = len([_ for _ in a if len(_) > 3 and not _.startswith('SOUSTITRE')]) + 1
 
