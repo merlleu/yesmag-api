@@ -16,6 +16,9 @@ NUM_ARTICLES = int(input("Nombre d'articles à marquer comme lus: "))
 SECONDES_PASSEES = random.randint(100, 400)*NUM_ARTICLES # nombre de secondes à ajouter aux stats
 ACCURACY = 0.92
 
+PERIOD_START_DAYS_AGO = 25 # 25 days ago
+PERIOD_END_DAYS_AGO = 1 # 1 day ago
+
 
 def ts(t):
         return datetime.datetime.fromtimestamp(t/1000 - 3600).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
@@ -27,7 +30,7 @@ def process_timer():
 
     while time_left > 0:
         # get a random start date between 1 and 25 days ago
-        start_time = int(time.time()) - random.randint(24, 24*25) * 60 * 60
+        start_time = int(time.time()) - random.randint(24*PERIOD_END_DAYS_AGO, 24*PERIOD_START_DAYS_AGO) * 60 * 60
         time_bucket_left = random.randint(3600, 3*3600) #  a bit more than 2 hours, max period to avoid detection
 
         session_duration = min(time_left, time_bucket_left)
@@ -60,7 +63,7 @@ def process_articles():
     for i in range(NUM_ARTICLES):
         article = articles_non_lus.pop()
 
-        tm = round((time.time() - random.randint(3600, 3600*24*25))*1000)
+        tm = round((time.time() - random.randint(3600*24*PERIOD_END_DAYS_AGO, 3600*24*PERIOD_START_DAYS_AGO))*1000)
         tm_start = tm - random.randint(100_000, 400_000)
         Q = api.get_quizz(article['id'])
         if not Q:
