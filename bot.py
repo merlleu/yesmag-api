@@ -3,6 +3,7 @@ import time
 import datetime
 import random
 import getpass
+import json
 EMAIL = input("Email: ")
 PASSWORD = getpass.getpass("Password: ")
 
@@ -12,7 +13,7 @@ print("Logged-in as {} ({})".format(usr['email'], usr['id']))
 
 NUM_ARTICLES = int(input("Nombre d'articles à marquer comme lus: "))
 # NUM_ARTICLES = 1
-SECONDES_PASSEES = random.randint(100, 200)*NUM_ARTICLES # nombre de secondes à ajouter aux stats
+SECONDES_PASSEES = random.randint(100, 400)*NUM_ARTICLES # nombre de secondes à ajouter aux stats
 ACCURACY = 0.92
 
 
@@ -104,9 +105,52 @@ def update_read_stats():
         print(s)
         api.put_bag(s['id'], {"json": j})
 
+def remove_future_stats():
+    for s in api.get_bags()['hydra:member']:
+        j = s['json']
+        if isinstance(j, dict) and( j.get('date','').startswith('2501') or j.get('lastModified','').startswith('2501')):
+            print("UPDATE {}".format(json.dumps(j)))
+            if 'date' in j:
+                j['date'] = j['date'].replace('2501', '2022')
+            if 'dateFinished' in j:
+                j['dateFinished'] = j['dateFinished'].replace('2501', '2022')
+            if 'lastModified' in j:
+                j['lastModified'] = j['lastModified'].replace('2501', '2022')
+            print(api.put_bag(s['id'], s))
+    
+    # remove previous stats...
+    stats = api.get_bags()['hydra:member']
+    i = 0
+    for bag in stats:
+        if bag['type'] == 'userStats':
+            j = bag['json']
+            j = [ _ for _ in j if 'date' not in _ or not _['date'].startswith('2501') ]
+            print(j)
+            api.put_bag(bag['id'], {"json": j})
+            i += 1
+    print(i)
+    
         
     
 if __name__ == "__main__":
-    process_timer()
-    process_articles()
-    # update_read_stats()
+    while True:
+        print("1 - Marquer des articles comme lus")
+        print("2 - Simuler un temps de lecture")
+        print("3 - Mettre à jour les réponses de QCM pour atteindre l'objectif d'accuracy.")
+        print("4 - Supprimer les stats futures")
+        print("5 - Quitter")
+        choice = input("Choix: ")
+        if choice == '1':
+            process_articles()
+        elif choice == '2':
+            process_timer()
+        elif choice == '3':
+            update_read_stats()
+        elif choice == '4':
+            remove_future_stats()
+        elif choice == '5':
+            break
+        else:
+            print("Choix invalide")
+
+        print("")
