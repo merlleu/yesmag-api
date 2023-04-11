@@ -42,7 +42,8 @@ class YesMagAPI:
 
     def get_quizz(self, quizz_id: int):
         r = self.session.get("https://yesmag.fr/webapp/data/quizz/{}.json?cachebust={}".format(quizz_id, int(time.time())))
-        if r.status_code == 404:
+        try:
+            return r.json()
+        except:
             return None
-        return r.json()
     
